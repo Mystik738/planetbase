@@ -65,3 +65,11 @@ var moduleSizes = map[string]int64{
 	"Wt": 2,
 	"Wi": 3,
 }
+
+var sizeToFloat = map[int64]float64{
+	4: 8.75,
+	3: 7.75,
+	2: 6.25,
+	1: 4.75,
+	0: 3.75,
+}

@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/xml"
-	"log"
 	"math"
 	"math/rand"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 //The approximate minimum coordinate of the map
@@ -18,7 +19,7 @@ const minCoord float64 = 625.0
 const maxCoord float64 = 1375.0
 
 //The approximate offset for connections for buildings of different sizes
-const sizeOffset float64 = 0.7
+const sizeOffset float64 = 0.5
 
 //Id incementer for most things
 var ID AutoInc
@@ -66,6 +67,10 @@ func readTemplate(s string) ([][]string, int64, int64) {
 		}
 	}
 
+	log.Debug(template)
+
+	//z and x is swapped due to how the template is read,
+	//essentially each line is depth in game, not width
 	return template, zSize, xSize
 }
 
@@ -116,98 +121,79 @@ func initSave() SaveGame {
 	s.Blizzard.TimeToNextBlizzard.Value = nd
 	s.SolarFlare.TimeToNextSolarFlare.Value = nd
 	s.Sandstorm.TimeToNextSandstorm.Value = nd
+	s.ShipManager.TimeToNextIntruder.Value = nd
 
 	return s
 }
 
 func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 	vertDist := 20.0
-	dist := math.Sin(math.Pi/3.0) * vertDist
-	offset := vertDist / 2.0
+	horzDist := math.Sin(math.Pi/3.0) * vertDist
+	offset := horzDist / 2.0
 	isOff := false
 
-	xMapOffset := (maxCoord+minCoord)/2 - ((float64(xSize) - 1.0) / 2.0 * dist)
+	xMapOffset := (maxCoord+minCoord)/2 - ((float64(xSize) - 1.0) / 2.0 * horzDist)
 	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * vertDist)
 
-	//log.Printf("Map offsets are %v, %v", xMapOffset, zMapOffset)
-	log.Printf("Making %v by %v structures", xSize, zSize)
+	log.Debugf("Map offsets are %v, %v", xMapOffset, zMapOffset)
+	log.Infof("Making %v by %v structures", xSize, zSize)
 
 	idGrid := make([][]int64, xSize)
+	posGrid := make([][]Position, xSize)
 	for i := range idGrid {
 		idGrid[i] = make([]int64, zSize)
+		posGrid[i] = make([]Position, zSize)
 	}
 
 	for x := 0; x < int(xSize); x++ {
-		xPos := float64(x)*dist + float64(xMapOffset)
-		//log.Println()
+		xPos := float64(x)*horzDist + float64(xMapOffset)
 		for z := 0; z < int(zSize); z++ {
 			zPos := float64(z)*vertDist + zMapOffset
 			if isOff {
 				zPos += offset
 			}
-			p := Position{
+			p1 := Position{
 				X: xPos,
 				Z: zPos,
 			}
 
 			if len(template) >= x*2 && len(template[x*2]) > z*2+1 {
 				if _, value := moduleTypes[template[x*2][z*2+1]]; value {
-					//log.Printf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2+1]])
-					c := initModule(template[x*2][z*2+1], p)
+					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2+1]])
+					c := initModule(template[x*2][z*2+1], p1)
 					s.Constructions.Construction = append(s.Constructions.Construction, c)
 					idGrid[x][z] = c.ID.Value
-
+					posGrid[x][z] = p1
 					//Connections
 					if z > 0 && compareTemplate(template, x*2, z*2, "==") {
-						//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[x*2][z*2])
-						sizeDiff := calcSizes(template[x*2][z*2-1], template[x*2][z*2+1])
-						p = Position{
-							X: xPos,
-							Z: zPos - (vertDist / 2) + sizeOffset*float64(sizeDiff),
-						}
+						p := calcLinkPosition(p1, posGrid[x][z-1], template[x*2][z*2+1], template[x*2][z*2-1], vertDist)
 						ct := initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
 						s.Constructions.Construction = append(s.Constructions.Construction, ct)
 					}
 					if x > 0 {
 						if isOff {
 							if compareTemplate(template, (x-1)*2+1, z*2+1, "\\\\") {
-								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
-								sizeDiff := calcSizes(template[(x-1)*2][z*2+1], template[x*2][z*2+1])
-								p = Position{
-									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-									Z: zPos - (vertDist / 4) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-								}
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
+								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2+1], template[(x-1)*2][z*2+1], vertDist)
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2, "//") {
-								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2])
-								sizeDiff := calcSizes(template[(x-1)*2][(z+1)*2+1], template[x*2][z*2+1])
-								p = Position{
-									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-									Z: zPos + (vertDist / 4) - sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-								}
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2])
+								p := calcLinkPosition(p1, posGrid[x-1][z+1], template[x*2][z*2+1], template[(x-1)*2][(z+1)*2+1], vertDist)
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 						} else {
 							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
-								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][z*2])
-								sizeDiff := calcSizes(template[(x-1)*2][(z-1)*2+1], template[x*2][z*2+1])
-								p = Position{
-									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-									Z: zPos - (vertDist / 4) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-								}
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][z*2])
+								p := calcLinkPosition(p1, posGrid[x-1][z-1], template[x*2][z*2+1], template[(x-1)*2][(z-1)*2+1], vertDist)
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2+1, "//") {
-								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
-								sizeDiff := calcSizes(template[(x-1)*2][z*2+1], template[x*2][z*2+1])
-								p = Position{
-									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-									Z: zPos + (vertDist / 4) - sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
-								}
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
+								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2+1], template[(x-1)*2][z*2+1], vertDist)
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
@@ -221,8 +207,17 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 
 }
 
-func calcSizes(s1 string, s2 string) int64 {
-	return moduleSizes[s1] - moduleSizes[s2]
+func calcLinkPosition(p1 Position, p2 Position, s1 string, s2 string, dist float64) Position {
+	//Calc percentage from p1
+	linkSize := dist - sizeToFloat[moduleSizes[s1]] - sizeToFloat[moduleSizes[s2]]
+	perc := (sizeToFloat[moduleSizes[s1]] + linkSize/2) / dist
+
+	//Get vector from p1 to p2, mult by perc, add to p1
+	p := Position{
+		X: p1.X + perc*(p2.X-p1.X),
+		Z: p1.Z + perc*(p2.Z-p1.Z),
+	}
+	return p
 }
 
 func initConnection(p Position, rotation float64, id1 int64, id2 int64) Construction {
@@ -419,12 +414,12 @@ func readSave() {
 	}
 
 	sort.Strings(moduleTypeSlice)
-	log.Println(max)
-	log.Println(min)
-	log.Println(minID)
-	log.Println(maxID)
-	//log.Println("\"", strings.Join(moduleTypeSlice, "\",\n\""), "\"")
-	log.Println(moduleTypeSize)
+	log.Info(max)
+	log.Info(min)
+	log.Info(minID)
+	log.Info(maxID)
+	//log.Info("\"", strings.Join(moduleTypeSlice, "\",\n\""), "\"")
+	log.Info(moduleTypeSize)
 }
 
 func addTechs(save *SaveGame) {
