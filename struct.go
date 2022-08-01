@@ -111,17 +111,16 @@ type Components struct {
 	} `xml:"component"`
 }
 
+type Slot struct {
+	Text      string     `xml:",chardata"`
+	Position  Position   `xml:"position"`
+	MaxHeight XMLFloat64 `xml:"max-height"`
+	Resource  []Resource `xml:"resource"`
+}
+
 type ResourceStorage struct {
 	Text string `xml:",chardata"`
-	Slot []struct {
-		Text      string   `xml:",chardata"`
-		Position  Position `xml:"position"`
-		MaxHeight struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"max-height"`
-		Resource []Resource `xml:"resource"`
-	} `xml:"slot"`
+	Slot []Slot `xml:"slot"`
 }
 
 type Links struct {
@@ -136,20 +135,17 @@ type Resources struct {
 }
 
 type Resource struct {
-	Text        string    `xml:",chardata"`
-	Type        string    `xml:"type,attr"`
-	ID          XMLInt64  `xml:"id"`
-	TraderID    XMLString `xml:"trader-id"`
-	Position    Position  `xml:"position"`
-	Orientation Position  `xml:"orientation"`
-	State       XMLInt64  `xml:"state"`
-	Location    XMLInt64  `xml:"location"`
-	Subtype     struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"subtype"`
-	Condition  XMLFloat64 `xml:"condition"`
-	Durability XMLFloat64 `xml:"durability"`
+	Text        string     `xml:",chardata"`
+	Type        string     `xml:"type,attr"`
+	ID          XMLInt64   `xml:"id"`
+	TraderID    XMLInt64   `xml:"trader-id"`
+	Position    Position   `xml:"position"`
+	Orientation Position   `xml:"orientation"`
+	State       XMLInt64   `xml:"state"`
+	Location    XMLInt64   `xml:"location"`
+	Subtype     XMLInt64   `xml:"subtype"`
+	Condition   XMLFloat64 `xml:"condition"`
+	Durability  XMLFloat64 `xml:"durability"`
 }
 
 type InmaterialResources struct {

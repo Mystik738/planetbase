@@ -25,6 +25,7 @@ func main() {
 	addTechs(&s)
 	addStructures(&s, template, xSize, zSize)
 	addCharacters(&s, 40, 30, 20, 5, 5)
+	addResources(&s)
 	writeSave(&s)
 }
 
@@ -66,13 +67,14 @@ func initSave() SaveGame {
 	//Hardcode some values
 	s.Version = 12
 	s.Resources.InmaterialResources.Amount.ResourceType.Value = "Coins"
-	s.Camera.Height.Value = 21
-	s.Camera.Position.X = 1128
+	s.Camera.Height.Value = 25
+	s.Camera.Position.X = 1000
 	s.Camera.Position.Y = s.Camera.Height.Value
-	s.Camera.Position.Z = 993
+	s.Camera.Position.Z = 1000
 	//Maybe this could be randomized?
 	s.VisitorEvents.VisitorEvent.Type = "VisitorEventFugitives"
 	s.VisitorEvents.VisitorEvent.VisitorCount.Value = 6
+	s.Planet.PlanetIndex.Value = 2
 
 	//Randomize meteor seeds
 	meteors := make([]string, 30)
@@ -94,7 +96,7 @@ func initSave() SaveGame {
 }
 
 func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
-	vertDist := 25.0
+	vertDist := 20.0
 	dist := math.Sin(math.Pi/3.0) * vertDist
 	offset := vertDist / 2.0
 	isOff := false
@@ -138,8 +140,8 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 							X: xPos,
 							Z: zPos - (vertDist / 2),
 						}
-						c = initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
-						s.Constructions.Construction = append(s.Constructions.Construction, c)
+						ct := initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
+						s.Constructions.Construction = append(s.Constructions.Construction, ct)
 					}
 					if x > 0 {
 						if isOff {
@@ -149,8 +151,8 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 									X: xPos - (dist / 2),
 									Z: zPos - (vertDist / 4),
 								}
-								c = initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
-								s.Constructions.Construction = append(s.Constructions.Construction, c)
+								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
+								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2, "//") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2])
@@ -158,8 +160,8 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 									X: xPos - (dist / 2),
 									Z: zPos + (vertDist / 4),
 								}
-								c = initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
-								s.Constructions.Construction = append(s.Constructions.Construction, c)
+								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
+								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 						} else {
 							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
@@ -168,8 +170,8 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 									X: xPos - (dist / 2),
 									Z: zPos - (vertDist / 4),
 								}
-								c = initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
-								s.Constructions.Construction = append(s.Constructions.Construction, c)
+								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
+								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2+1, "//") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
@@ -177,8 +179,8 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 									X: xPos - (dist / 2),
 									Z: zPos + (vertDist / 4),
 								}
-								c = initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
-								s.Constructions.Construction = append(s.Constructions.Construction, c)
+								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
+								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 						}
 					}
@@ -188,13 +190,6 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 		isOff = !isOff
 	}
 
-}
-
-func compareTemplate(template [][]string, x int, z int, val string) bool {
-	if len(template) >= x && len(template[x]) > z && template[x][z] == val {
-		return true
-	}
-	return false
 }
 
 func initConnection(p Position, rotation float64, id1 int64, id2 int64) Construction {
@@ -234,15 +229,17 @@ func initConstruction(t string, p Position) Construction {
 	c.ID.Value = NextID(&ID)
 	c.SizeIndex.Value = 3
 	c.State.Value = 3
-	c.BuildProgress.Value = -1
 	c.Oxygen.Value = 1.0
 	c.Condition.Value = 1.0
 
-	if c.Type == "ModuleTypePowerCollector" {
-		c.PowerStorage.Value = 20000000
-	}
-
 	return c
+}
+
+func compareTemplate(template [][]string, x int, z int, val string) bool {
+	if len(template) >= x && len(template[x]) > z && template[x][z] == val {
+		return true
+	}
+	return false
 }
 
 func addCharacters(s *SaveGame, workers int64, biologists int64, engineers int64, medics int64, guards int64) {
@@ -288,6 +285,32 @@ func initCharacter(s string) Character {
 	c.WanderTime.Value = 1
 
 	return c
+}
+
+func addResources(s *SaveGame) {
+	p := Position{
+		X: 1000,
+		Y: 0,
+		Z: 1000,
+	}
+
+	for _, resourceName := range []string{"Metal", "Bioplastic", "Meal", "MedicalSupplies", "Spares", "Vegetables", "Vitromeat", "Gun", "Semiconductors"} {
+		for i := 0; i < 100; i++ {
+			s.Resources.Resource = append(s.Resources.Resource, initResource(resourceName, p))
+		}
+	}
+}
+
+func initResource(s string, p Position) Resource {
+	r := Resource{
+		Type:     s,
+		Position: p,
+	}
+	r.ID.Value = NextID(&ID)
+	r.Condition.Value = 1
+	r.TraderID.Value = -1
+
+	return r
 }
 
 func writeSave(s *SaveGame) {
