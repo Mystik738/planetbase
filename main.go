@@ -47,7 +47,7 @@ func readTemplate(s string) ([][]string, int64, int64) {
 	zSize = int64((len(lines) + 1) / 2)
 
 	for i, line := range lines {
-		template = append(template, make([]string, 1))
+		template = append(template, make([]string, 0))
 
 		//Remove offsets
 		if i%4 == 2 {
@@ -156,7 +156,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 
 	//X and Z here are Modules only, not template coordinates
 	//Xt = Xm*2
-	//Zt = Zm*2 + 1
+	//Zt = Zm*2
 	for x := 0; x < int(xSize); x++ {
 		xPos := float64(x)*horzDist + float64(xMapOffset)
 		for z := 0; z < int(zSize); z++ {
@@ -174,46 +174,46 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 				p1.Y = 4
 			}
 
-			if len(template) >= x*2 && len(template[x*2]) > z*2+1 {
-				if _, value := moduleTypes[template[x*2][z*2+1]]; value {
-					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2+1]])
-					c := initModule(template[x*2][z*2+1], p1)
+			if len(template) >= x*2 && len(template[x*2]) > z*2 {
+				if _, value := moduleTypes[template[x*2][z*2]]; value {
+					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2]])
+					c := initModule(template[x*2][z*2], p1)
 					s.Constructions.Construction = append(s.Constructions.Construction, c)
 					idGrid[x][z] = c.ID.Value
 					posGrid[x][z] = p1
 
 					//Connections. Only connect with Modules that have been placed,
 					//For each module this should be max 3 others
-					if z > 0 && compareTemplate(template, x*2, z*2, "==") {
-						p := calcLinkPosition(p1, posGrid[x][z-1], template[x*2][z*2+1], template[x*2][z*2-1], vertDist)
+					if z > 0 && compareTemplate(template, x*2, z*2-1, "==") {
+						p := calcLinkPosition(p1, posGrid[x][z-1], template[x*2][z*2], template[x*2][(z-1)*2], vertDist)
 						ct := initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
 						s.Constructions.Construction = append(s.Constructions.Construction, ct)
 					}
 					if x > 0 {
 						//If we're offset, look at (x-1, z) and (x-1, z+1)
 						if isOff {
-							if compareTemplate(template, (x-1)*2+1, z*2+1, "\\\\") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
-								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2+1], template[(x-1)*2][z*2+1], vertDist)
+							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2])
+								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2], template[(x-1)*2][z*2], vertDist)
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
-							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2, "//") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2])
-								p := calcLinkPosition(p1, posGrid[x-1][z+1], template[x*2][z*2+1], template[(x-1)*2][(z+1)*2+1], vertDist)
+							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2-1, "//") {
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2-1])
+								p := calcLinkPosition(p1, posGrid[x-1][z+1], template[x*2][z*2], template[(x-1)*2][(z+1)*2], vertDist)
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 						} else { //If we're not offset, look at (x-1, z) and (x-1, z-1)
-							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][z*2])
-								p := calcLinkPosition(p1, posGrid[x-1][z-1], template[x*2][z*2+1], template[(x-1)*2][(z-1)*2+1], vertDist)
+							if z > 0 && compareTemplate(template, (x-1)*2+1, (z-1)*2+1, "\\\\") {
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][(z-1)*2+1])
+								p := calcLinkPosition(p1, posGrid[x-1][z-1], template[x*2][z*2], template[(x-1)*2][(z-1)*2], vertDist)
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
-							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2+1, "//") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
-								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2+1], template[(x-1)*2][z*2+1], vertDist)
+							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2, "//") {
+								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2])
+								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2], template[(x-1)*2][z*2], vertDist)
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
@@ -353,7 +353,11 @@ func addResources(s *SaveGame) {
 	}
 
 	for _, resourceName := range []string{"Metal", "Bioplastic", "Meal", "MedicalSupplies", "Spares", "Vegetables", "Vitromeat", "Gun", "Semiconductors"} {
-		for i := 0; i < 300; i++ {
+		amt := 200
+		if resourceName == "Bioplastic" {
+			amt *= 2
+		}
+		for i := 0; i < amt; i++ {
 			s.Resources.Resource = append(s.Resources.Resource, initResource(resourceName, p))
 		}
 	}
