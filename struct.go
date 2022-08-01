@@ -11,6 +11,26 @@ func NextID(ai *AutoInc) int64 {
 	return ai.ID
 }
 
+type XMLInt64 struct {
+	Text  string `xml:",chardata"`
+	Value int64  `xml:"value,attr"`
+}
+
+type XMLFloat64 struct {
+	Text  string  `xml:",chardata"`
+	Value float64 `xml:"value,attr"`
+}
+
+type XMLString struct {
+	Text  string `xml:",chardata"`
+	Value string `xml:"value,attr"`
+}
+
+type XMLBool struct {
+	Text  string `xml:",chardata"`
+	Value bool   `xml:"value,attr"`
+}
+
 type Position struct {
 	Text string  `xml:",chardata"`
 	X    float64 `xml:"x,attr"`
@@ -18,124 +38,65 @@ type Position struct {
 	Z    float64 `xml:"z,attr"`
 }
 
-type Tech struct {
-	Text  string `xml:",chardata"`
-	Value string `xml:"value,attr"`
-}
-
 type VisitorEvents struct {
-	Text          string `xml:",chardata"`
-	NextEventTime struct {
-		Text  string  `xml:",chardata"`
-		Value float64 `xml:"value,attr"`
-	} `xml:"next-event-time"`
-	VisitorEvent VisitorEvent `xml:"visitor-event"`
+	Text          string       `xml:",chardata"`
+	NextEventTime XMLFloat64   `xml:"next-event-time"`
+	VisitorEvent  VisitorEvent `xml:"visitor-event"`
 }
 
 type VisitorEvent struct {
-	Text         string `xml:",chardata"`
-	Type         string `xml:"type,attr"`
-	VisitorCount struct {
-		Text  string `xml:",chardata"`
-		Value int64  `xml:"value,attr"`
-	} `xml:"visitor-count"`
+	Text         string   `xml:",chardata"`
+	Type         string   `xml:"type,attr"`
+	VisitorCount XMLInt64 `xml:"visitor-count"`
 }
 
 type Construction struct {
-	Text    string `xml:",chardata"`
-	Type    string `xml:"type,attr"`
-	Enabled struct {
-		Text  string `xml:",chardata"`
-		Value bool   `xml:"value,attr"`
-	} `xml:"enabled"`
-	State struct {
-		Text  string `xml:",chardata"`
-		Value int64  `xml:"value,attr"`
-	} `xml:"state"`
-	BuildProgress struct {
-		Text  string  `xml:",chardata"`
-		Value float64 `xml:"value,attr"`
-	} `xml:"build-progress"`
-	Condition struct {
-		Text  string  `xml:",chardata"`
-		Value float64 `xml:"value,attr"`
-	} `xml:"condition"`
-	Oxygen struct {
-		Text  string  `xml:",chardata"`
-		Value float64 `xml:"value,attr"`
-	} `xml:"oxygen"`
-	ID          XMLInt64 `xml:"id"`
-	Position    Position `xml:"position"`
-	Orientation Position `xml:"orientation"`
-	TimeBuilt   struct {
-		Text  string  `xml:",chardata"`
-		Value float64 `xml:"value,attr"`
-	} `xml:"time-built"`
-	Locked struct {
-		Text  string `xml:",chardata"`
-		Value bool   `xml:"value,attr"`
-	} `xml:"locked"`
-	HighPriority struct {
-		Text  string `xml:",chardata"`
-		Value bool   `xml:"value,attr"`
-	} `xml:"high-priority"`
-	ModuleType struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"module-type"`
-	SizeIndex struct {
-		Text  string `xml:",chardata"`
-		Value int64  `xml:"value,attr"`
-	} `xml:"size-index"`
-	MobileRotation     Position            `xml:"mobile-rotation"`
-	PowerStorage       *PowerStorage       `xml:"power-storage"`
-	Components         *Components         `xml:"components"`
-	ProductionProgress *ProductionProgress `xml:"production-progress"`
-	ResourceStorage    *ResourceStorage    `xml:"resource-storage"`
-	LaserCharge        *LaserCharge        `xml:"laser-charge"`
-	Links              *Links              `xml:"links"`
+	Text               string           `xml:",chardata"`
+	Type               string           `xml:"type,attr"`
+	Enabled            XMLBool          `xml:"enabled"`
+	State              XMLInt64         `xml:"state"`
+	BuildProgress      XMLFloat64       `xml:"build-progress"`
+	Condition          XMLFloat64       `xml:"condition"`
+	Oxygen             XMLFloat64       `xml:"oxygen"`
+	ID                 XMLInt64         `xml:"id"`
+	Position           Position         `xml:"position"`
+	Orientation        Position         `xml:"orientation"`
+	TimeBuilt          XMLFloat64       `xml:"time-built"`
+	Locked             XMLBool          `xml:"locked"`
+	HighPriority       XMLBool          `xml:"high-priority"`
+	ModuleType         XMLString        `xml:"module-type"`
+	SizeIndex          XMLInt64         `xml:"size-index"`
+	MobileRotation     Position         `xml:"mobile-rotation"`
+	PowerStorage       *XMLFloat64      `xml:"power-storage"`
+	Components         *Components      `xml:"components"`
+	ProductionProgress *XMLFloat64      `xml:"production-progress"`
+	ResourceStorage    *ResourceStorage `xml:"resource-storage"`
+	LaserCharge        *XMLFloat64      `xml:"laser-charge"`
+	Links              *Links           `xml:"links"`
 }
 
 type Components struct {
 	Text      string `xml:",chardata"`
 	Component []struct {
-		Text    string `xml:",chardata"`
-		Type    string `xml:"type,attr"`
-		Enabled []struct {
-			Text  string `xml:",chardata"`
-			Value bool   `xml:"value,attr"`
-		} `xml:"enabled"`
-		State struct {
+		Text    string  `xml:",chardata"`
+		Type    string  `xml:"type,attr"`
+		Enabled XMLBool `xml:"enabled"`
+		State   struct {
 			Text  string `xml:",chardata"`
 			Value string `xml:"value,attr"`
 		} `xml:"state"`
-		BuildProgress struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"build-progress"`
-		ID struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"id"`
+		BuildProgress XMLFloat64 `xml:"build-progress"`
+		ID            XMLInt64   `xml:"id"`
 		ComponentType struct {
 			Text  string `xml:",chardata"`
 			Value string `xml:"value,attr"`
 		} `xml:"component-type"`
-		Position    Position `xml:"position"`
-		Orientation Position `xml:"orientation"`
-		Condition   struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"condition"`
-		ProductionProgress struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"production-progress"`
-		Time struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"time"`
-		ProducedItemIndex struct {
+		Position           Position   `xml:"position"`
+		Orientation        Position   `xml:"orientation"`
+		Condition          XMLFloat64 `xml:"condition"`
+		ProductionProgress XMLFloat64 `xml:"production-progress"`
+		Time               XMLFloat64 `xml:"time"`
+		ProducedItemIndex  struct {
 			Text  string `xml:",chardata"`
 			Value string `xml:"value,attr"`
 		} `xml:"produced-item-index"`
@@ -148,11 +109,6 @@ type Components struct {
 			Resource []Resource `xml:"resource"`
 		} `xml:"resource-container"`
 	} `xml:"component"`
-}
-
-type ProductionProgress struct {
-	Text  string  `xml:",chardata"`
-	Value float64 `xml:"value,attr"`
 }
 
 type ResourceStorage struct {
@@ -168,24 +124,9 @@ type ResourceStorage struct {
 	} `xml:"slot"`
 }
 
-type LaserCharge struct {
-	Text  string  `xml:",chardata"`
-	Value float64 `xml:"value,attr"`
-}
-
 type Links struct {
 	Text string     `xml:",chardata"`
 	ID   []XMLInt64 `xml:"id"`
-}
-
-type XMLInt64 struct {
-	Text  string `xml:",chardata"`
-	Value int64  `xml:"value,attr"`
-}
-
-type PowerStorage struct {
-	Text  string  `xml:",chardata"`
-	Value float64 `xml:"value,attr"`
 }
 
 type Resources struct {
@@ -195,58 +136,63 @@ type Resources struct {
 }
 
 type Resource struct {
-	Text     string   `xml:",chardata"`
-	Type     string   `xml:"type,attr"`
-	ID       XMLInt64 `xml:"id"`
-	TraderID struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"trader-id"`
-	Position    Position `xml:"position"`
-	Orientation Position `xml:"orientation"`
-	State       struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"state"`
-	Location struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"location"`
-	Subtype struct {
+	Text        string    `xml:",chardata"`
+	Type        string    `xml:"type,attr"`
+	ID          XMLInt64  `xml:"id"`
+	TraderID    XMLString `xml:"trader-id"`
+	Position    Position  `xml:"position"`
+	Orientation Position  `xml:"orientation"`
+	State       XMLInt64  `xml:"state"`
+	Location    XMLInt64  `xml:"location"`
+	Subtype     struct {
 		Text  string `xml:",chardata"`
 		Value string `xml:"value,attr"`
 	} `xml:"subtype"`
-	Condition struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"condition"`
-	Durability struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"durability"`
+	Condition  XMLFloat64 `xml:"condition"`
+	Durability XMLFloat64 `xml:"durability"`
 }
 
 type InmaterialResources struct {
-	Text          string `xml:",chardata"`
-	ContainerName struct {
-		Text  string `xml:",chardata"`
-		Value string `xml:"value,attr"`
-	} `xml:"container-name"`
-	Amount Amount `xml:"amount"`
+	Text          string    `xml:",chardata"`
+	ContainerName XMLString `xml:"container-name"`
+	Amount        Amount    `xml:"amount"`
 }
 
 type Amount struct {
-	Text         string       `xml:",chardata"`
-	ResourceType ResourceType `xml:"resource-type"`
-	Amount       struct {
-		Text  string `xml:",chardata"`
-		Value int64  `xml:"value,attr"`
-	} `xml:"amount"`
+	Text         string    `xml:",chardata"`
+	ResourceType XMLString `xml:"resource-type"`
+	Amount       XMLInt64  `xml:"amount"`
 }
 
-type ResourceType struct {
-	Text  string `xml:",chardata"`
-	Value string `xml:"value,attr"`
+type Character struct {
+	Text                    string      `xml:",chardata"`
+	Type                    string      `xml:"type,attr"`
+	Position                Position    `xml:"position"`
+	Orientation             Position    `xml:"orientation"`
+	Location                XMLInt64    `xml:"location"`
+	Name                    XMLString   `xml:"name"`
+	Specialization          XMLString   `xml:"specialization"`
+	StatusFlags             XMLInt64    `xml:"status-flags"`
+	State                   XMLInt64    `xml:"state"`
+	ID                      XMLInt64    `xml:"id"`
+	WanderTime              XMLFloat64  `xml:"wander-time"`
+	Health                  XMLFloat64  `xml:"Health"`
+	Nutrition               XMLFloat64  `xml:"Nutrition"`
+	Hydration               XMLFloat64  `xml:"Hydration"`
+	Oxygen                  XMLFloat64  `xml:"Oxygen"`
+	Sleep                   XMLFloat64  `xml:"Sleep"`
+	Morale                  XMLFloat64  `xml:"Morale"`
+	Gender                  XMLInt64    `xml:"gender"`
+	BasicMealCount          XMLInt64    `xml:"basic-meal-count"`
+	HeadIndex               XMLInt64    `xml:"head-index"`
+	SkinColorIndex          XMLInt64    `xml:"skin-color-index"`
+	HairColorIndex          XMLInt64    `xml:"hair-color-index"`
+	Doctor                  XMLBool     `xml:"doctor"`
+	InmunityToContagionTime XMLFloat64  `xml:"inmunity-to-contagion-time"`
+	LoadedResource          *XMLInt64   `xml:"loaded-resource"`
+	Condition               *XMLFloat64 `xml:"Condition"`
+	Integrity               *XMLFloat64 `xml:"Integrity"`
+	IntegrityDecayRate      *XMLFloat64 `xml:"integrity-decay-rate"`
 }
 
 type SaveGame struct {
@@ -259,249 +205,108 @@ type SaveGame struct {
 		NextBotID XMLInt64 `xml:"next-bot-id"`
 	} `xml:"id-generator"`
 	Planet struct {
-		Text        string `xml:",chardata"`
-		PlanetIndex struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"planet-index"`
+		Text        string   `xml:",chardata"`
+		PlanetIndex XMLInt64 `xml:"planet-index"`
 	} `xml:"planet"`
 	Milestones struct {
-		Text      string `xml:",chardata"`
-		Milestone []struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"milestone"`
+		Text      string      `xml:",chardata"`
+		Milestone []XMLString `xml:"milestone"`
 	} `xml:"milestones"`
 	Techs struct {
-		Text string `xml:",chardata"`
-		Tech []Tech `xml:"tech"`
+		Text string      `xml:",chardata"`
+		Tech []XMLString `xml:"tech"`
 	} `xml:"techs"`
 	Environment struct {
-		Text      string `xml:",chardata"`
-		TimeOfDay struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-of-day"`
-		WindIndicator struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"wind-indicator"`
+		Text          string     `xml:",chardata"`
+		TimeOfDay     XMLFloat64 `xml:"time-of-day"`
+		WindIndicator XMLFloat64 `xml:"wind-indicator"`
 	} `xml:"environment"`
 	Terrain struct {
-		Text string `xml:",chardata"`
-		Seed struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"seed"`
+		Text string   `xml:",chardata"`
+		Seed XMLInt64 `xml:"seed"`
 	} `xml:"terrain"`
 	Camera struct {
-		Text   string `xml:",chardata"`
-		Height struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"height"`
-		Position    Position `xml:"position"`
-		Orientation Position `xml:"orientation"`
+		Text        string     `xml:",chardata"`
+		Height      XMLFloat64 `xml:"height"`
+		Position    Position   `xml:"position"`
+		Orientation Position   `xml:"orientation"`
 	} `xml:"camera"`
 	Sandstorm struct {
-		Text                string `xml:",chardata"`
-		SandstormInProgress struct {
-			Text  string `xml:",chardata"`
-			Value bool   `xml:"value,attr"`
-		} `xml:"sandstorm-in-progress"`
-		TimeToNextSandstorm struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-to-next-sandstorm"`
-		Time struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time"`
-		SandstormTime struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"sandstorm-time"`
+		Text                string     `xml:",chardata"`
+		SandstormInProgress XMLBool    `xml:"sandstorm-in-progress"`
+		TimeToNextSandstorm XMLFloat64 `xml:"time-to-next-sandstorm"`
+		Time                XMLFloat64 `xml:"time"`
+		SandstormTime       XMLFloat64 `xml:"sandstorm-time"`
 	} `xml:"sandstorm"`
 	Blizzard struct {
-		Text               string `xml:",chardata"`
-		BlizzardInProgress struct {
-			Text  string `xml:",chardata"`
-			Value bool   `xml:"value,attr"`
-		} `xml:"blizzard-in-progress"`
-		TimeToNextBlizzard struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-to-next-blizzard"`
-		Time struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time"`
-		BlizzardTime struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"blizzard-time"`
+		Text               string     `xml:",chardata"`
+		BlizzardInProgress XMLBool    `xml:"blizzard-in-progress"`
+		TimeToNextBlizzard XMLFloat64 `xml:"time-to-next-blizzard"`
+		Time               XMLFloat64 `xml:"time"`
+		BlizzardTime       XMLFloat64 `xml:"blizzard-time"`
 	} `xml:"blizzard"`
 	SolarFlare struct {
-		Text                 string `xml:",chardata"`
-		SolarFlareInProgress struct {
-			Text  string `xml:",chardata"`
-			Value bool   `xml:"value,attr"`
-		} `xml:"solar-flare-in-progress"`
-		TimeToNextSolarFlare struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-to-next-solar-flare"`
-		Time struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time"`
-		SolarFlareTime struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"solar-flare-time"`
+		Text                 string     `xml:",chardata"`
+		SolarFlareInProgress XMLBool    `xml:"solar-flare-in-progress"`
+		TimeToNextSolarFlare XMLFloat64 `xml:"time-to-next-solar-flare"`
+		Time                 XMLFloat64 `xml:"time"`
+		SolarFlareTime       XMLFloat64 `xml:"solar-flare-time"`
 	} `xml:"solar-flare"`
 	Colony struct {
-		Text          string `xml:",chardata"`
-		ExtraPrestige struct {
-			Text  string `xml:",chardata"`
-			Value int    `xml:"value,attr"`
-		} `xml:"extra-prestige"`
-		GameTime struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"game-time"`
-		RealGameTime struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"real-game-time"`
-		Name struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"name"`
-		Latitude struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"latitude"`
-		Longitude struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"longitude"`
+		Text          string     `xml:",chardata"`
+		ExtraPrestige XMLInt64   `xml:"extra-prestige"`
+		GameTime      XMLFloat64 `xml:"game-time"`
+		RealGameTime  XMLFloat64 `xml:"real-game-time"`
+		Name          XMLString  `xml:"name"`
+		Latitude      XMLInt64   `xml:"latitude"`
+		Longitude     XMLInt64   `xml:"longitude"`
 	} `xml:"colony"`
 	ShipManager struct {
-		Text                         string `xml:",chardata"`
-		Type                         string `xml:"type,attr"`
-		TimeSinceLastColonistLanding struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-since-last-colonist-landing"`
-		TimeSinceLastVisitorLanding struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-since-last-visitor-landing"`
-		TimeSinceLastMerchantLanding struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-since-last-merchant-landing"`
-		TimeToNextIntruder struct {
-			Text  string  `xml:",chardata"`
-			Value float64 `xml:"value,attr"`
-		} `xml:"time-to-next-intruder"`
-		LandingPermissions struct {
-			Text             string `xml:",chardata"`
-			ColonistsAllowed struct {
-				Text  string `xml:",chardata"`
-				Value bool   `xml:"value,attr"`
-			} `xml:"colonists-allowed"`
-			MerchantsAllowed struct {
-				Text  string `xml:",chardata"`
-				Value bool   `xml:"value,attr"`
-			} `xml:"merchants-allowed"`
-			VisitorsAllowed struct {
-				Text  string `xml:",chardata"`
-				Value bool   `xml:"value,attr"`
-			} `xml:"visitors-allowed"`
-			WorkerPercentage struct {
-				Text  string `xml:",chardata"`
-				Value int64  `xml:"value,attr"`
-			} `xml:"Worker-percentage"`
-			BiologistPercentage struct {
-				Text  string `xml:",chardata"`
-				Value int64  `xml:"value,attr"`
-			} `xml:"Biologist-percentage"`
-			EngineerPercentage struct {
-				Text  string `xml:",chardata"`
-				Value int64  `xml:"value,attr"`
-			} `xml:"Engineer-percentage"`
-			MedicPercentage struct {
-				Text  string `xml:",chardata"`
-				Value int64  `xml:"value,attr"`
-			} `xml:"Medic-percentage"`
-			GuardPercentage struct {
-				Text  string `xml:",chardata"`
-				Value int64  `xml:"value,attr"`
-			} `xml:"Guard-percentage"`
+		Text                         string     `xml:",chardata"`
+		Type                         string     `xml:"type,attr"`
+		TimeSinceLastColonistLanding XMLFloat64 `xml:"time-since-last-colonist-landing"`
+		TimeSinceLastVisitorLanding  XMLFloat64 `xml:"time-since-last-visitor-landing"`
+		TimeSinceLastMerchantLanding XMLFloat64 `xml:"time-since-last-merchant-landing"`
+		TimeToNextIntruder           XMLFloat64 `xml:"time-to-next-intruder"`
+		LandingPermissions           struct {
+			Text                string   `xml:",chardata"`
+			ColonistsAllowed    XMLBool  `xml:"colonists-allowed"`
+			MerchantsAllowed    XMLBool  `xml:"merchants-allowed"`
+			VisitorsAllowed     XMLBool  `xml:"visitors-allowed"`
+			WorkerPercentage    XMLInt64 `xml:"Worker-percentage"`
+			BiologistPercentage XMLInt64 `xml:"Biologist-percentage"`
+			EngineerPercentage  XMLInt64 `xml:"Engineer-percentage"`
+			MedicPercentage     XMLInt64 `xml:"Medic-percentage"`
+			GuardPercentage     XMLInt64 `xml:"Guard-percentage"`
 		} `xml:"landing-permissions"`
 	} `xml:"ship-manager"`
 	Stats struct {
 		Text    string `xml:",chardata"`
 		Counter []struct {
-			Text     string `xml:",chardata"`
-			Type     string `xml:"type,attr"`
-			TypeName struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"type-name"`
-			Counts struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"counts"`
+			Text     string    `xml:",chardata"`
+			Type     string    `xml:"type,attr"`
+			TypeName XMLString `xml:"type-name"`
+			Counts   XMLString `xml:"counts"`
 		} `xml:"counter"`
 	} `xml:"stats"`
 	VisitorEvents VisitorEvents `xml:"visitor-events"`
 	GameHints     struct {
-		Text       string `xml:",chardata"`
-		ShownHints struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"shown-hints"`
+		Text       string    `xml:",chardata"`
+		ShownHints XMLString `xml:"shown-hints"`
 	} `xml:"game-hints"`
 	MeteorManager struct {
-		Text  string `xml:",chardata"`
-		Seeds struct {
-			Text  string `xml:",chardata"`
-			Value string `xml:"value,attr"`
-		} `xml:"seeds"`
+		Text  string    `xml:",chardata"`
+		Seeds XMLString `xml:"seeds"`
 	} `xml:"meteor-manager"`
 	ManufactureLimits struct {
-		Text         string `xml:",chardata"`
-		CarrierLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Carrier-limit"`
-		ConstructorLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Constructor-limit"`
-		DrillerLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Driller-limit"`
-		MedicalSuppliesLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"MedicalSupplies-limit"`
-		SparesLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Spares-limit"`
-		SemiconductorsLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Semiconductors-limit"`
-		GunLimit struct {
-			Text  string `xml:",chardata"`
-			Value int64  `xml:"value,attr"`
-		} `xml:"Gun-limit"`
+		Text                 string   `xml:",chardata"`
+		CarrierLimit         XMLInt64 `xml:"Carrier-limit"`
+		ConstructorLimit     XMLInt64 `xml:"Constructor-limit"`
+		DrillerLimit         XMLInt64 `xml:"Driller-limit"`
+		MedicalSuppliesLimit XMLInt64 `xml:"MedicalSupplies-limit"`
+		SparesLimit          XMLInt64 `xml:"Spares-limit"`
+		SemiconductorsLimit  XMLInt64 `xml:"Semiconductors-limit"`
+		GunLimit             XMLInt64 `xml:"Gun-limit"`
 	} `xml:"manufacture-limits"`
 	ChallengeManager string `xml:"challenge-manager"`
 	Constructions    struct {
@@ -509,109 +314,8 @@ type SaveGame struct {
 		Construction []Construction `xml:"construction"`
 	} `xml:"constructions"`
 	Characters struct {
-		Text      string `xml:",chardata"`
-		Character []struct {
-			Text        string   `xml:",chardata"`
-			Type        string   `xml:"type,attr"`
-			Position    Position `xml:"position"`
-			Orientation Position `xml:"orientation"`
-			Location    struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"location"`
-			Name struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"name"`
-			Specialization struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"specialization"`
-			StatusFlags struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"status-flags"`
-			State struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"state"`
-			ID struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"id"`
-			WanderTime struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"wander-time"`
-			Health struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Health"`
-			Nutrition struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Nutrition"`
-			Hydration struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Hydration"`
-			Oxygen struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Oxygen"`
-			Sleep struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Sleep"`
-			Morale struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Morale"`
-			Gender struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"gender"`
-			BasicMealCount struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"basic-meal-count"`
-			HeadIndex struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"head-index"`
-			SkinColorIndex struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"skin-color-index"`
-			HairColorIndex struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"hair-color-index"`
-			Doctor struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"doctor"`
-			InmunityToContagionTime struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"inmunity-to-contagion-time"`
-			LoadedResource struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"loaded-resource"`
-			Condition struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Condition"`
-			Integrity struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"Integrity"`
-			IntegrityDecayRate struct {
-				Text  string `xml:",chardata"`
-				Value string `xml:"value,attr"`
-			} `xml:"integrity-decay-rate"`
-		} `xml:"character"`
+		Text      string      `xml:",chardata"`
+		Character []Character `xml:"character"`
 	} `xml:"characters"`
 	Resources    Resources `xml:"resources"`
 	Ships        string    `xml:"ships"`
