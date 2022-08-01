@@ -178,6 +178,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 				if _, value := moduleTypes[template[x*2][z*2]]; value {
 					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2]])
 					c := initModule(template[x*2][z*2], p1)
+					c.Orientation = orientModule(template, x*2, z*2)
 					s.Constructions.Construction = append(s.Constructions.Construction, c)
 					idGrid[x][z] = c.ID.Value
 					posGrid[x][z] = p1
@@ -272,6 +273,32 @@ func initModule(t string, p Position) Construction {
 	return c
 }
 
+//Orient a Module based on its connections
+func orientModule(template [][]string, x int, z int) Position {
+	if !compareTemplate(template, x, z-1, "  ") && !compareTemplate(template, x, z+1, "  ") {
+		return Position{}
+	}
+
+	//Offset
+	offset := 0
+	if z%4 == 2 {
+		offset = 1
+	}
+
+	if compareTemplate(template, x-1, z-1+offset, "\\\\") && compareTemplate(template, x+1, z+offset, "\\\\") {
+		return Position{
+			Y: 60,
+		}
+	}
+	if compareTemplate(template, x+1, z-1+offset, "//") && compareTemplate(template, x-1, z+offset, "//") {
+		return Position{
+			Y: 120,
+		}
+	}
+
+	return Position{}
+}
+
 //Initializes a construction
 func initConstruction(t string, p Position) Construction {
 	c := Construction{
@@ -291,6 +318,9 @@ func initConstruction(t string, p Position) Construction {
 
 //Safely compares a template index to a value.
 func compareTemplate(template [][]string, x int, z int, val string) bool {
+	if x < 0 || z < 0 {
+		return false
+	}
 	if len(template) > x && len(template[x]) > z && template[x][z] == val {
 		return true
 	}
