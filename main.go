@@ -11,10 +11,19 @@ import (
 	"strings"
 )
 
+//The approximate minimum coordinate of the map
 const minCoord float64 = 625.0
+
+//The approximate maximum coordinate of the map
 const maxCoord float64 = 1375.0
 
+//The approximate offset for connections for buildings of different sizes
+const sizeOffset float64 = 0.7
+
+//Id incementer for most things
 var ID AutoInc
+
+//Id incrementer for bots
 var BotID AutoInc
 
 func main() {
@@ -92,6 +101,22 @@ func initSave() SaveGame {
 	s.ShipManager.LandingPermissions.MedicPercentage.Value = 5
 	s.ShipManager.LandingPermissions.GuardPercentage.Value = 5
 
+	//Max Manufacture Limits
+	limit := int64(2147483647)
+	s.ManufactureLimits.CarrierLimit.Value = limit
+	s.ManufactureLimits.ConstructorLimit.Value = limit
+	s.ManufactureLimits.DrillerLimit.Value = limit
+	s.ManufactureLimits.GunLimit.Value = limit
+	s.ManufactureLimits.MedicalSuppliesLimit.Value = limit
+	s.ManufactureLimits.SemiconductorsLimit.Value = limit
+	s.ManufactureLimits.SparesLimit.Value = limit
+
+	//Push out natural disasters
+	nd := 1800.0
+	s.Blizzard.TimeToNextBlizzard.Value = nd
+	s.SolarFlare.TimeToNextSolarFlare.Value = nd
+	s.Sandstorm.TimeToNextSandstorm.Value = nd
+
 	return s
 }
 
@@ -136,9 +161,10 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 					//Connections
 					if z > 0 && compareTemplate(template, x*2, z*2, "==") {
 						//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[x*2][z*2])
+						sizeDiff := calcSizes(template[x*2][z*2-1], template[x*2][z*2+1])
 						p = Position{
 							X: xPos,
-							Z: zPos - (vertDist / 2),
+							Z: zPos - (vertDist / 2) + sizeOffset*float64(sizeDiff),
 						}
 						ct := initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
 						s.Constructions.Construction = append(s.Constructions.Construction, ct)
@@ -147,18 +173,20 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 						if isOff {
 							if compareTemplate(template, (x-1)*2+1, z*2+1, "\\\\") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
+								sizeDiff := calcSizes(template[(x-1)*2][z*2+1], template[x*2][z*2+1])
 								p = Position{
-									X: xPos - (dist / 2),
-									Z: zPos - (vertDist / 4),
+									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
+									Z: zPos - (vertDist / 4) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
 								}
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2, "//") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2])
+								sizeDiff := calcSizes(template[(x-1)*2][(z+1)*2+1], template[x*2][z*2+1])
 								p = Position{
-									X: xPos - (dist / 2),
-									Z: zPos + (vertDist / 4),
+									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
+									Z: zPos + (vertDist / 4) - sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
 								}
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
@@ -166,18 +194,20 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 						} else {
 							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][z*2])
+								sizeDiff := calcSizes(template[(x-1)*2][(z-1)*2+1], template[x*2][z*2+1])
 								p = Position{
-									X: xPos - (dist / 2),
-									Z: zPos - (vertDist / 4),
+									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
+									Z: zPos - (vertDist / 4) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
 								}
 								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2+1, "//") {
 								//log.Printf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2+1])
+								sizeDiff := calcSizes(template[(x-1)*2][z*2+1], template[x*2][z*2+1])
 								p = Position{
-									X: xPos - (dist / 2),
-									Z: zPos + (vertDist / 4),
+									X: xPos - (dist / 2) + sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
+									Z: zPos + (vertDist / 4) - sizeOffset*float64(sizeDiff)*math.Sin(math.Pi/3.0),
 								}
 								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
@@ -190,6 +220,10 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 		isOff = !isOff
 	}
 
+}
+
+func calcSizes(s1 string, s2 string) int64 {
+	return moduleSizes[s1] - moduleSizes[s2]
 }
 
 func initConnection(p Position, rotation float64, id1 int64, id2 int64) Construction {
@@ -295,7 +329,7 @@ func addResources(s *SaveGame) {
 	}
 
 	for _, resourceName := range []string{"Metal", "Bioplastic", "Meal", "MedicalSupplies", "Spares", "Vegetables", "Vitromeat", "Gun", "Semiconductors"} {
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 200; i++ {
 			s.Resources.Resource = append(s.Resources.Resource, initResource(resourceName, p))
 		}
 	}
@@ -319,7 +353,7 @@ func writeSave(s *SaveGame) {
 
 	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
 	checkErr(err)
-	err = os.WriteFile("saves/s.sav", xmlBytes, 0775)
+	err = os.WriteFile("/Users/rbeckman/Documents/Planetbase/Saves/s.sav", xmlBytes, 0775)
 	checkErr(err)
 }
 
