@@ -18,9 +18,6 @@ const minCoord float64 = 625.0
 //The approximate maximum coordinate of the map
 const maxCoord float64 = 1375.0
 
-//The approximate offset for connections for buildings of different sizes
-const sizeOffset float64 = 0.5
-
 //Id incementer for most things
 var ID AutoInc
 
@@ -88,7 +85,7 @@ func initSave() SaveGame {
 	//Maybe this could be randomized?
 	s.VisitorEvents.VisitorEvent.Type = "VisitorEventFugitives"
 	s.VisitorEvents.VisitorEvent.VisitorCount.Value = 6
-	s.Planet.PlanetIndex.Value = 2
+	s.Planet.PlanetIndex.Value = 3
 
 	//Randomize meteor seeds
 	meteors := make([]string, 30)
@@ -157,6 +154,10 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 				Z: zPos,
 			}
 
+			if s.Planet.PlanetIndex.Value == 3 {
+				p1.Y = 4
+			}
+
 			if len(template) >= x*2 && len(template[x*2]) > z*2+1 {
 				if _, value := moduleTypes[template[x*2][z*2+1]]; value {
 					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2+1]])
@@ -215,6 +216,7 @@ func calcLinkPosition(p1 Position, p2 Position, s1 string, s2 string, dist float
 	//Get vector from p1 to p2, mult by perc, add to p1
 	p := Position{
 		X: p1.X + perc*(p2.X-p1.X),
+		Y: p1.Y + perc*(p2.Y-p1.Y),
 		Z: p1.Z + perc*(p2.Z-p1.Z),
 	}
 	return p
@@ -223,6 +225,7 @@ func calcLinkPosition(p1 Position, p2 Position, s1 string, s2 string, dist float
 func initConnection(p Position, rotation float64, id1 int64, id2 int64) Construction {
 	c := initConstruction("Connection", p)
 	c.Orientation.Y = rotation
+	c.Oxygen.Value = -1.0
 	l := make([]XMLInt64, 2)
 	l[1].Value = id1
 	l[0].Value = id2
