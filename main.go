@@ -58,8 +58,8 @@ func readTemplate(s string) ([][]string, int64, int64) {
 		if i%2 == 1 {
 			line = line[1:]
 		}
-		if int64(len(line))/4 > xSize {
-			xSize = int64(len(line) / 4)
+		if int64(len(line)+3)/4 > xSize {
+			xSize = int64((len(line) + 3) / 4)
 		}
 		for x := 0; x < len(line)-1; x += 2 {
 			template[i] = append(template[i], line[x:x+2])
@@ -130,7 +130,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * vertDist)
 
 	//log.Printf("Map offsets are %v, %v", xMapOffset, zMapOffset)
-	//log.Printf("Making %v by %v structures", xSize, zSize)
+	log.Printf("Making %v by %v structures", xSize, zSize)
 
 	idGrid := make([][]int64, xSize)
 	for i := range idGrid {
@@ -139,7 +139,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 
 	for x := 0; x < int(xSize); x++ {
 		xPos := float64(x)*dist + float64(xMapOffset)
-		log.Println()
+		//log.Println()
 		for z := 0; z < int(zSize); z++ {
 			zPos := float64(z)*vertDist + zMapOffset
 			if isOff {
@@ -151,7 +151,6 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 			}
 
 			if len(template) >= x*2 && len(template[x*2]) > z*2+1 {
-				log.Printf("Placing [%v]", template[x*2][z*2+1])
 				if _, value := moduleTypes[template[x*2][z*2+1]]; value {
 					//log.Printf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2+1]])
 					c := initModule(template[x*2][z*2+1], p)
@@ -329,7 +328,7 @@ func addResources(s *SaveGame) {
 	}
 
 	for _, resourceName := range []string{"Metal", "Bioplastic", "Meal", "MedicalSupplies", "Spares", "Vegetables", "Vitromeat", "Gun", "Semiconductors"} {
-		for i := 0; i < 200; i++ {
+		for i := 0; i < 300; i++ {
 			s.Resources.Resource = append(s.Resources.Resource, initResource(resourceName, p))
 		}
 	}
