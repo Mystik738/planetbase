@@ -137,7 +137,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 
 	//General calculations based on coordinate system
 	horzDist := math.Sin(math.Pi/3.0) * vertDist
-	offset := horzDist / 2.0
+	offset := vertDist / 2.0
 	isOff := false
 	xMapOffset := (maxCoord+minCoord)/2 - ((float64(xSize) - 1.0) / 2.0 * horzDist)
 	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * vertDist)
