@@ -172,19 +172,19 @@ type Character struct {
 	State                   XMLInt64    `xml:"state"`
 	ID                      XMLInt64    `xml:"id"`
 	WanderTime              XMLFloat64  `xml:"wander-time"`
-	Health                  XMLFloat64  `xml:"Health"`
-	Nutrition               XMLFloat64  `xml:"Nutrition"`
-	Hydration               XMLFloat64  `xml:"Hydration"`
-	Oxygen                  XMLFloat64  `xml:"Oxygen"`
-	Sleep                   XMLFloat64  `xml:"Sleep"`
-	Morale                  XMLFloat64  `xml:"Morale"`
-	Gender                  XMLInt64    `xml:"gender"`
-	BasicMealCount          XMLInt64    `xml:"basic-meal-count"`
-	HeadIndex               XMLInt64    `xml:"head-index"`
-	SkinColorIndex          XMLInt64    `xml:"skin-color-index"`
-	HairColorIndex          XMLInt64    `xml:"hair-color-index"`
-	Doctor                  XMLBool     `xml:"doctor"`
-	InmunityToContagionTime XMLFloat64  `xml:"inmunity-to-contagion-time"`
+	Health                  *XMLFloat64 `xml:"Health"`
+	Nutrition               *XMLFloat64 `xml:"Nutrition"`
+	Hydration               *XMLFloat64 `xml:"Hydration"`
+	Oxygen                  *XMLFloat64 `xml:"Oxygen"`
+	Sleep                   *XMLFloat64 `xml:"Sleep"`
+	Morale                  *XMLFloat64 `xml:"Morale"`
+	Gender                  *XMLInt64   `xml:"gender"`
+	BasicMealCount          *XMLInt64   `xml:"basic-meal-count"`
+	HeadIndex               *XMLInt64   `xml:"head-index"`
+	SkinColorIndex          *XMLInt64   `xml:"skin-color-index"`
+	HairColorIndex          *XMLInt64   `xml:"hair-color-index"`
+	Doctor                  *XMLBool    `xml:"doctor"`
+	InmunityToContagionTime *XMLFloat64 `xml:"inmunity-to-contagion-time"`
 	LoadedResource          *XMLInt64   `xml:"loaded-resource"`
 	Condition               *XMLFloat64 `xml:"Condition"`
 	Integrity               *XMLFloat64 `xml:"Integrity"`

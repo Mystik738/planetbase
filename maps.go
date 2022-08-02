@@ -38,7 +38,7 @@ var moduleSizes = map[string]int64{
 	"Ai": 0,
 	"An": 1,
 	"Ba": 2,
-	"Bs": 1,
+	"Bs": 0,
 	"Bi": 4,
 	"Ca": 1,
 	"Cn": 2,

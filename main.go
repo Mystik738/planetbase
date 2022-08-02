@@ -27,6 +27,8 @@ var ID AutoInc
 var BotID AutoInc
 
 func main() {
+	log.SetLevel(log.InfoLevel)
+
 	//readSave("saves/save3.sav")
 	template, xSize, zSize := readTemplate("templates/template.txt")
 
@@ -34,6 +36,7 @@ func main() {
 	addTechs(&s)
 	addStructures(&s, template, xSize, zSize)
 	addCharacters(&s, 40, 30, 20, 5, 5)
+	addBots(&s, 100, 20, 40)
 	addResources(&s)
 	writeSave(&s)
 }
@@ -83,7 +86,7 @@ func initSave() SaveGame {
 	s.Planet.PlanetIndex.Value = 3
 	s.Colony.Latitude.Value = 0
 	s.Colony.Longitude.Value = -128
-
+	s.Colony.Name.Value = randomdata.City()
 	s.Terrain.Seed.Value = s.Colony.Longitude.Value*1000 + s.Colony.Latitude.Value
 
 	//Hardcode some values
@@ -135,7 +138,7 @@ func initSave() SaveGame {
 
 func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 	//TODO: This distance should be inputtable
-	vertDist := 20.0
+	vertDist := 25.0
 
 	//General calculations based on coordinate system
 	horzDist := math.Sin(math.Pi/3.0) * vertDist
@@ -331,7 +334,9 @@ func compareTemplate(template [][]string, x int, z int, val string) bool {
 
 //Adds people to the SaveGame.
 func addCharacters(s *SaveGame, workers int64, biologists int64, engineers int64, medics int64, guards int64) {
-	s.Characters.Character = make([]Character, 0)
+	if s.Characters.Character == nil {
+		s.Characters.Character = make([]Character, 0)
+	}
 
 	var charMap = map[string]int64{
 		"Worker":    workers,
@@ -342,15 +347,34 @@ func addCharacters(s *SaveGame, workers int64, biologists int64, engineers int64
 	}
 	for charType, amt := range charMap {
 		for i := 0; i < int(amt); i++ {
-			s.Characters.Character = append(s.Characters.Character, initCharacter(charType))
+			s.Characters.Character = append(s.Characters.Character, initCharacter("Colonist", charType))
+		}
+	}
+}
+
+func addBots(s *SaveGame, carrier int64, constructor int64, driller int64) {
+	if s.Characters.Character == nil {
+		s.Characters.Character = make([]Character, 0)
+	}
+
+	var botMap = map[string]int64{
+		"Carrier":     carrier,
+		"Constructor": constructor,
+		"Driller":     driller,
+	}
+
+	for charType, amt := range botMap {
+		for i := 0; i < int(amt); i++ {
+			s.Characters.Character = append(s.Characters.Character, initCharacter("Bot", charType))
 		}
 	}
 }
 
 //Initializes a character
-func initCharacter(s string) Character {
+func initCharacter(t string, s string) Character {
+	log.Debugf("Creating %v of type %v", t, s)
 	c := Character{
-		Type: "Colonist",
+		Type: t,
 	}
 	p := Position{
 		X: 1000,
@@ -360,28 +384,56 @@ func initCharacter(s string) Character {
 	c.Position = p
 	c.Specialization.Value = s
 	if c.Specialization.Value == "Medic" {
-		c.Doctor.Value = true
+		c.Doctor = &XMLBool{
+			Value: true,
+		}
 	}
 	c.State.Value = 3
 	c.ID.Value = NextID(&ID)
-	c.Health.Value = 1
-	c.Nutrition.Value = 1
-	c.Hydration.Value = 1
-	c.Oxygen.Value = 1
-	c.Sleep.Value = 1
-	c.Morale.Value = 1
 	c.WanderTime.Value = 1
 
-	//Cosmetic
-	c.Gender.Value = rand.Int63n(2)
-	c.HeadIndex.Value = rand.Int63n(11)
-	c.SkinColorIndex.Value = rand.Int63n(11)
-	c.HairColorIndex.Value = rand.Int63n(11)
+	vals := &XMLFloat64{
+		Value: 1.0,
+	}
+	if t == "Colonist" {
+		c.Health = vals
+		c.Nutrition = vals
+		c.Hydration = vals
+		c.Oxygen = vals
+		c.Sleep = vals
+		c.Morale = vals
 
-	if c.Gender.Value == 0 {
-		c.Name.Value = randomdata.FirstName(randomdata.Male) + " " + randomdata.LastName()
-	} else {
-		c.Name.Value = randomdata.FirstName(randomdata.Female) + " " + randomdata.LastName()
+		//Cosmetic
+		c.Gender = &XMLInt64{
+			Value: rand.Int63n(2),
+		}
+		c.HeadIndex = &XMLInt64{
+			Value: rand.Int63n(11),
+		}
+		c.SkinColorIndex = &XMLInt64{
+			Value: rand.Int63n(11),
+		}
+		c.HairColorIndex = &XMLInt64{
+			Value: rand.Int63n(11),
+		}
+
+		if c.Gender.Value == 0 {
+			c.Name.Value = randomdata.FullName(randomdata.Male)
+		} else {
+			c.Name.Value = randomdata.FullName(randomdata.Female)
+		}
+	}
+
+	if t == "Bot" {
+		c.Name.Value = randomdata.SillyName()
+
+		c.Condition = vals
+		c.Integrity = vals
+
+		//Never decay?
+		c.IntegrityDecayRate = &XMLFloat64{
+			Value: 100000,
+		}
 	}
 
 	return c
