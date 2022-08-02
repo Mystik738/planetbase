@@ -426,6 +426,18 @@ func initCharacter(t string, s string) Character {
 
 	if t == "Bot" {
 		c.Name.Value = randomdata.SillyName()
+		//If we want real bot names
+		/*switch c.Specialization.Value {
+		case "Driller":
+			c.Name.Value = "DR-" + strconv.Itoa(int(NextID(&BotID)))
+			break
+		case "Constructor":
+			c.Name.Value = "CNT-" + strconv.Itoa(int(NextID(&BotID)))
+			break
+		case "Carrier":
+			c.Name.Value = "CR-" + strconv.Itoa(int(NextID(&BotID)))
+			break
+		}*/
 
 		c.Condition = vals
 		c.Integrity = vals
