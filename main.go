@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Pallinder/go-randomdata"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,7 +27,7 @@ var ID AutoInc
 var BotID AutoInc
 
 func main() {
-	//readSave()
+	//readSave("saves/save3.sav")
 	template, xSize, zSize := readTemplate("templates/template.txt")
 
 	s := initSave()
@@ -78,7 +80,7 @@ func initSave() SaveGame {
 	ID.ID = 1
 
 	//Need a way to input these values
-	s.Planet.PlanetIndex.Value = 2
+	s.Planet.PlanetIndex.Value = 3
 	s.Colony.Latitude.Value = 0
 	s.Colony.Longitude.Value = -128
 
@@ -331,20 +333,17 @@ func compareTemplate(template [][]string, x int, z int, val string) bool {
 func addCharacters(s *SaveGame, workers int64, biologists int64, engineers int64, medics int64, guards int64) {
 	s.Characters.Character = make([]Character, 0)
 
-	for i := 0; i < int(workers); i++ {
-		s.Characters.Character = append(s.Characters.Character, initCharacter("Worker"))
+	var charMap = map[string]int64{
+		"Worker":    workers,
+		"Biologist": biologists,
+		"Engineer":  engineers,
+		"Medic":     medics,
+		"Guard":     guards,
 	}
-	for i := 0; i < int(biologists); i++ {
-		s.Characters.Character = append(s.Characters.Character, initCharacter("Biologist"))
-	}
-	for i := 0; i < int(engineers); i++ {
-		s.Characters.Character = append(s.Characters.Character, initCharacter("Engineer"))
-	}
-	for i := 0; i < int(medics); i++ {
-		s.Characters.Character = append(s.Characters.Character, initCharacter("Medic"))
-	}
-	for i := 0; i < int(guards); i++ {
-		s.Characters.Character = append(s.Characters.Character, initCharacter("Guard"))
+	for charType, amt := range charMap {
+		for i := 0; i < int(amt); i++ {
+			s.Characters.Character = append(s.Characters.Character, initCharacter(charType))
+		}
 	}
 }
 
@@ -360,7 +359,9 @@ func initCharacter(s string) Character {
 	}
 	c.Position = p
 	c.Specialization.Value = s
-	c.Name.Value = s
+	if c.Specialization.Value == "Medic" {
+		c.Doctor.Value = true
+	}
 	c.State.Value = 3
 	c.ID.Value = NextID(&ID)
 	c.Health.Value = 1
@@ -370,6 +371,18 @@ func initCharacter(s string) Character {
 	c.Sleep.Value = 1
 	c.Morale.Value = 1
 	c.WanderTime.Value = 1
+
+	//Cosmetic
+	c.Gender.Value = rand.Int63n(2)
+	c.HeadIndex.Value = rand.Int63n(11)
+	c.SkinColorIndex.Value = rand.Int63n(11)
+	c.HairColorIndex.Value = rand.Int63n(11)
+
+	if c.Gender.Value == 0 {
+		c.Name.Value = randomdata.FirstName(randomdata.Male) + " " + randomdata.LastName()
+	} else {
+		c.Name.Value = randomdata.FirstName(randomdata.Female) + " " + randomdata.LastName()
+	}
 
 	return c
 }
@@ -418,9 +431,9 @@ func writeSave(s *SaveGame) {
 }
 
 //Reads the save from file and analyzes a few characteristics
-func readSave() {
+func readSave(fileName string) {
 	var save SaveGame
-	fileContents, err := os.ReadFile("saves/save2.sav")
+	fileContents, err := os.ReadFile(fileName)
 	checkErr(err)
 
 	err = xml.Unmarshal(fileContents, &save)
@@ -480,13 +493,29 @@ func readSave() {
 		}
 	}
 
+	var maxGender, maxHead, maxSkin, maxHair int64
+
+	for _, c := range save.Characters.Character {
+		if c.Gender.Value > maxGender {
+			maxGender = c.Gender.Value
+		}
+		if c.HeadIndex.Value > maxHead {
+			maxHead = c.HeadIndex.Value
+		}
+		if c.SkinColorIndex.Value > maxSkin {
+			maxSkin = c.SkinColorIndex.Value
+		}
+		if c.HairColorIndex.Value > maxHair {
+			maxHair = c.HairColorIndex.Value
+		}
+	}
+
 	sort.Strings(moduleTypeSlice)
-	log.Info(max)
-	log.Info(min)
-	log.Info(minID)
-	log.Info(maxID)
-	log.Info("\"", strings.Join(moduleTypeSlice, "\",\n\""), "\"")
-	log.Info(moduleTypeSize)
+	log.Infof("Coordinates (%v, %v)", max, min)
+	log.Infof("IDs (%v, %v)", minID, maxID)
+	//log.Info("\"", strings.Join(moduleTypeSlice, "\",\n\""), "\"")
+	//log.Info(moduleTypeSize)
+	log.Infof("Gender: %v Head: %v Skin: %v Hair: %v", maxGender, maxHead, maxSkin, maxHair)
 }
 
 //Adds all techs to the SaveGame
