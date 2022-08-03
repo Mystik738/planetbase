@@ -286,6 +286,9 @@ func initModule(t string, p Position) Construction {
 			Value: 20000000,
 		}
 	}
+	if moduleOx[t] {
+		c.Oxygen.Value = 1.0
+	}
 
 	return c
 }
@@ -327,7 +330,7 @@ func initConstruction(t string, p Position) Construction {
 	c.ID.Value = NextID(&ID)
 	c.SizeIndex.Value = 3
 	c.State.Value = 3
-	c.Oxygen.Value = 1.0
+	c.Oxygen.Value = -1
 	c.Condition.Value = 1.0
 
 	return c
