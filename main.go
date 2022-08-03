@@ -138,34 +138,31 @@ func initSave() SaveGame {
 
 func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 	//TODO: This distance should be inputtable
-	vertDist := 25.0
+	dist := 25.0
 
 	//General calculations based on coordinate system
-	horzDist := math.Sin(math.Pi/3.0) * vertDist
-	offset := vertDist / 2.0
+	horizDist := math.Sin(math.Pi/3.0) * dist
+	offset := dist / 2.0
 	isOff := false
-	xMapOffset := (maxCoord+minCoord)/2 - ((float64(xSize) - 1.0) / 2.0 * horzDist)
-	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * vertDist)
+	xMapOffset := (maxCoord+minCoord)/2 - ((float64(xSize) - 1.0) / 2.0 * horizDist)
+	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * dist)
 
 	log.Debugf("Map offsets are %v, %v", xMapOffset, zMapOffset)
 	log.Infof("Making %v by %v structures", xSize, zSize)
 
 	//Some matrices to store values as needed
-	//TODO: Make these pointers to the Modules themselves
-	idGrid := make([][]int64, xSize)
-	posGrid := make([][]Position, xSize)
-	for i := range idGrid {
-		idGrid[i] = make([]int64, zSize)
-		posGrid[i] = make([]Position, zSize)
+	modGrid := make([][]*Construction, xSize)
+	for i := range modGrid {
+		modGrid[i] = make([]*Construction, zSize)
 	}
 
 	//X and Z here are Modules only, not template coordinates
 	//Xt = Xm*2
 	//Zt = Zm*2
 	for x := 0; x < int(xSize); x++ {
-		xPos := float64(x)*horzDist + float64(xMapOffset)
+		xPos := float64(x)*horizDist + float64(xMapOffset)
 		for z := 0; z < int(zSize); z++ {
-			zPos := float64(z)*vertDist + zMapOffset
+			zPos := float64(z)*dist + zMapOffset
 			if isOff {
 				zPos += offset
 			}
@@ -185,42 +182,31 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 					c := initModule(template[x*2][z*2], p1)
 					c.Orientation = orientModule(template, x*2, z*2)
 					s.Constructions.Construction = append(s.Constructions.Construction, c)
-					idGrid[x][z] = c.ID.Value
-					posGrid[x][z] = p1
+					modGrid[x][z] = &c
 
 					//Connections. Only connect with Modules that have been placed,
 					//For each module this should be max 3 others
 					if z > 0 && compareTemplate(template, x*2, z*2-1, "==") {
-						p := calcLinkPosition(p1, posGrid[x][z-1], template[x*2][z*2], template[x*2][(z-1)*2], vertDist)
-						ct := initConnection(p, 0, idGrid[x][z], idGrid[x][z-1])
+						ct := initConnection(*modGrid[x][z], *modGrid[x][z-1])
 						s.Constructions.Construction = append(s.Constructions.Construction, ct)
 					}
 					if x > 0 {
-						//If we're offset, look at (x-1, z) and (x-1, z+1)
-						if isOff {
+						if isOff { //If we're offset, look at (x-1, z) and (x-1, z+1)
 							if compareTemplate(template, (x-1)*2+1, z*2, "\\\\") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2])
-								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2], template[(x-1)*2][z*2], vertDist)
-								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z])
+								ct := initConnection(*modGrid[x][z], *modGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, (z+1)*2-1, "//") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][(z+1)*2-1])
-								p := calcLinkPosition(p1, posGrid[x-1][z+1], template[x*2][z*2], template[(x-1)*2][(z+1)*2], vertDist)
-								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z+1])
+								ct := initConnection(*modGrid[x][z], *modGrid[x-1][z+1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
-						} else { //If we're not offset, look at (x-1, z) and (x-1, z-1)
+						} else { //If we're not offset, look at (x-1, z-1) and (x-1, z)
 							if z > 0 && compareTemplate(template, (x-1)*2+1, (z-1)*2+1, "\\\\") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z-1], template[(x-1)*2+1][(z-1)*2+1])
-								p := calcLinkPosition(p1, posGrid[x-1][z-1], template[x*2][z*2], template[(x-1)*2][(z-1)*2], vertDist)
-								ct := initConnection(p, 60, idGrid[x][z], idGrid[x-1][z-1])
+								ct := initConnection(*modGrid[x][z], *modGrid[x-1][z-1])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
-							if z < int(zSize)-1 && compareTemplate(template, (x-1)*2+1, z*2, "//") {
-								log.Debugf("Connecting %v and %v via %v", idGrid[x][z], idGrid[x-1][z], template[(x-1)*2+1][z*2])
-								p := calcLinkPosition(p1, posGrid[x-1][z], template[x*2][z*2], template[(x-1)*2][z*2], vertDist)
-								ct := initConnection(p, 120, idGrid[x][z], idGrid[x-1][z])
+							if compareTemplate(template, (x-1)*2+1, z*2, "//") {
+								ct := initConnection(*modGrid[x][z], *modGrid[x-1][z])
 								s.Constructions.Construction = append(s.Constructions.Construction, ct)
 							}
 						}
@@ -234,10 +220,12 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 }
 
 // Calculates the position of a connection between two Modules
-func calcLinkPosition(p1 Position, p2 Position, s1 string, s2 string, dist float64) Position {
+func calcLinkPosition(p1 Position, p2 Position, s1 int64, s2 int64) Position {
+	dist := math.Sqrt(math.Pow(p2.X-p1.X, 2.0) + math.Pow(p2.Y-p1.Y, 2.0) + math.Pow(p2.Z-p1.Z, 2.0))
+
 	//Calc percentage from p1
-	linkSize := dist - sizeToFloat[moduleSizes[s1]] - sizeToFloat[moduleSizes[s2]]
-	perc := (sizeToFloat[moduleSizes[s1]] + linkSize/2) / dist
+	linkSize := dist - sizeToFloat[s1] - sizeToFloat[s2]
+	perc := (sizeToFloat[s1] + linkSize/2) / dist
 
 	//Get vector from p1 to p2, mult by perc, add to p1
 	p := Position{
@@ -249,13 +237,16 @@ func calcLinkPosition(p1 Position, p2 Position, s1 string, s2 string, dist float
 }
 
 //Initializes a Connection
-func initConnection(p Position, rotation float64, id1 int64, id2 int64) Construction {
+func initConnection(m1 Construction, m2 Construction) Construction {
+	log.Debugf("Connecting %v and %v", m1.ID.Value, m2.ID.Value)
+
+	p := calcLinkPosition(m1.Position, m2.Position, m1.SizeIndex.Value, m2.SizeIndex.Value)
 	c := initConstruction("Connection", p)
-	c.Orientation.Y = rotation
+	c.Orientation.Y = math.Atan((m2.Position.X-m1.Position.X)/(m2.Position.Z-m1.Position.Z)) * 180 / math.Pi
 	c.Oxygen.Value = -1.0
 	l := make([]XMLInt64, 2)
-	l[1].Value = id1
-	l[0].Value = id2
+	l[1].Value = m1.ID.Value
+	l[0].Value = m2.ID.Value
 	c.Links = &Links{
 		ID: l,
 	}
