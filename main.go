@@ -573,16 +573,16 @@ func readSave(fileName string) {
 	var maxGender, maxHead, maxSkin, maxHair int64
 
 	for _, c := range save.Characters.Character {
-		if c.Gender.Value > maxGender {
+		if c.Gender != nil && c.Gender.Value > maxGender {
 			maxGender = c.Gender.Value
 		}
-		if c.HeadIndex.Value > maxHead {
+		if c.HeadIndex != nil && c.HeadIndex.Value > maxHead {
 			maxHead = c.HeadIndex.Value
 		}
-		if c.SkinColorIndex.Value > maxSkin {
+		if c.SkinColorIndex != nil && c.SkinColorIndex.Value > maxSkin {
 			maxSkin = c.SkinColorIndex.Value
 		}
-		if c.HairColorIndex.Value > maxHair {
+		if c.HairColorIndex != nil && c.HairColorIndex.Value > maxHair {
 			maxHair = c.HairColorIndex.Value
 		}
 	}
