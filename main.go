@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/xml"
+	"flag"
+	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -29,16 +31,32 @@ var BotID AutoInc
 func main() {
 	log.SetLevel(log.InfoLevel)
 
-	//readSave("saves/save3.sav")
-	template, xSize, zSize := readTemplate("templates/template.txt")
+	distance := flag.Float64("d", 25.0, "The distance to space buildings.")
+	templateName := flag.String("t", "template.txt", "The template filename to use.")
+	outputName := flag.String("o", "save.sav", "The output filename to use.")
+	help := flag.Bool("h", false, "Display the help.")
+	read := flag.Bool("r", false, "Read the save instead and output some information from it.")
+	planet := flag.Int64("p", 3, "The planet to use, between 0 and 3.")
+	latitude := flag.Int64("la", 0, "The latitude to use. (default 0)")
+	longitude := flag.Int64("lo", -128, "The longitude to use.")
 
-	s := initSave()
-	addTechs(&s)
-	addStructures(&s, template, xSize, zSize)
-	addCharacters(&s, 40, 30, 20, 5, 5)
-	addBots(&s, 100, 20, 40)
-	addResources(&s)
-	writeSave(&s)
+	flag.Parse()
+
+	if *help {
+		helpText()
+	} else if *read {
+		readSave(*outputName)
+	} else {
+		template, xSize, zSize := readTemplate(*templateName)
+
+		s := initSave(*planet, *latitude, *longitude)
+		addTechs(&s)
+		addStructures(&s, template, xSize, zSize, *distance)
+		addCharacters(&s, 40, 30, 20, 5, 5)
+		addBots(&s, 100, 20, 40)
+		addResources(&s)
+		writeSave(&s, *outputName)
+	}
 }
 
 func readTemplate(s string) ([][]string, int64, int64) {
@@ -78,14 +96,14 @@ func readTemplate(s string) ([][]string, int64, int64) {
 	return template, zSize, xSize
 }
 
-func initSave() SaveGame {
+func initSave(planet, latitude, longitude int64) SaveGame {
 	s := SaveGame{}
 	ID.ID = 1
 
 	//Need a way to input these values
-	s.Planet.PlanetIndex.Value = 3
-	s.Colony.Latitude.Value = 0
-	s.Colony.Longitude.Value = -128
+	s.Planet.PlanetIndex.Value = planet
+	s.Colony.Latitude.Value = latitude
+	s.Colony.Longitude.Value = longitude
 	s.Colony.Name.Value = randomdata.City()
 	s.Terrain.Seed.Value = s.Colony.Longitude.Value*1000 + s.Colony.Latitude.Value
 
@@ -136,10 +154,7 @@ func initSave() SaveGame {
 	return s
 }
 
-func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
-	//TODO: This distance should be inputtable
-	dist := 25.0
-
+func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64, dist float64) int64 {
 	//General calculations based on coordinate system
 	horizDist := math.Sin(math.Pi/3.0) * dist
 	offset := dist / 2.0
@@ -148,7 +163,9 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 	zMapOffset := (maxCoord+minCoord)/2 - ((float64(zSize) - 1.0) / 2.0 * dist)
 
 	log.Debugf("Map offsets are %v, %v", xMapOffset, zMapOffset)
-	log.Infof("Making %v by %v structures", xSize, zSize)
+	log.Infof("Template is %v by %v modules", xSize, zSize)
+
+	totalModules := 0
 
 	//Some matrices to store values as needed
 	modGrid := make([][]*Construction, xSize)
@@ -179,6 +196,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 			if len(template) >= x*2 && len(template[x*2]) > z*2 {
 				if _, value := moduleTypes[template[x*2][z*2]]; value {
 					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2]])
+					totalModules++
 					c := initModule(template[x*2][z*2], p1)
 					c.Orientation = orientModule(template, x*2, z*2)
 					s.Constructions.Construction = append(s.Constructions.Construction, c)
@@ -217,6 +235,9 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64) {
 		isOff = !isOff
 	}
 
+	log.Infof("Created %v modules", totalModules)
+
+	return int64(totalModules)
 }
 
 // Calculates the position of a connection between two Modules
@@ -343,6 +364,7 @@ func addCharacters(s *SaveGame, workers int64, biologists int64, engineers int64
 	}
 }
 
+//Adds bots to the SaveGame
 func addBots(s *SaveGame, carrier int64, constructor int64, driller int64) {
 	if s.Characters.Character == nil {
 		s.Characters.Character = make([]Character, 0)
@@ -475,13 +497,13 @@ func initResource(s string, p Position) Resource {
 }
 
 //Write the save to file
-func writeSave(s *SaveGame) {
+func writeSave(s *SaveGame, o string) {
 	s.IDGenerator.NextID.Value = NextID(&ID)
 	s.IDGenerator.NextBotID.Value = NextID(&BotID)
 
 	xmlBytes, err := xml.MarshalIndent(s, "", "  ")
 	checkErr(err)
-	err = os.WriteFile("/Users/rbeckman/Documents/Planetbase/Saves/s.sav", xmlBytes, 0775)
+	err = os.WriteFile(o, xmlBytes, 0775)
 	checkErr(err)
 }
 
@@ -599,5 +621,28 @@ func checkErr(err error) {
 	if err != nil {
 		log.Println(err.Error())
 		os.Exit(1)
+	}
+}
+
+func helpText() {
+	fmt.Println(`This is a utility for creating Planetbase .sav files from a template. Modules in the template will be output at their largest size.
+
+Flags:`)
+	flag.PrintDefaults()
+	fmt.Println(`
+A small template looks like the following:
+
+Ox==Ai
+ \\//
+  So
+
+Where Ox, Ai, and So are modules and ==, //, and \\ are connections between them. Modules are expected to be connected hexagonally. The full list of module values are:`)
+	keys := make([]string, 0)
+	for k, _ := range moduleTypes {
+		keys = append(keys, k)
+	}
+	sort.Sort(sort.StringSlice(keys))
+	for _, v := range keys {
+		fmt.Printf("- %v: %v\n", v, moduleTypes[v][10:])
 	}
 }
