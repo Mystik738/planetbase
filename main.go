@@ -265,6 +265,9 @@ func initConnection(m1 Construction, m2 Construction) Construction {
 	c := initConstruction("Connection", p)
 	c.Orientation.Y = math.Atan((m2.Position.X-m1.Position.X)/(m2.Position.Z-m1.Position.Z)) * 180 / math.Pi
 	c.Oxygen.Value = -1.0
+	if m1.Oxygen.Value > 0.0 && m2.Oxygen.Value > 0.0 {
+		c.Oxygen.Value = 1.0
+	}
 	l := make([]XMLInt64, 2)
 	l[1].Value = m1.ID.Value
 	l[0].Value = m2.ID.Value
@@ -641,7 +644,7 @@ Ox==Ai
 
 Where Ox, Ai, and So are modules and ==, //, and \\ are connections between them. Modules are expected to be connected hexagonally. The full list of module values are:`)
 	keys := make([]string, 0)
-	for k, _ := range moduleTypes {
+	for k := range moduleTypes {
 		keys = append(keys, k)
 	}
 	sort.Sort(sort.StringSlice(keys))
