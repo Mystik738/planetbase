@@ -523,7 +523,7 @@ func readSave(fileName string) {
 	checkErr(err)
 
 	var min, max Position
-	var minID, maxID int64
+	var minID, maxID, modCount int64
 	moduleTypeMap := make(map[string]bool)
 	moduleTypeSize := make(map[string]int64)
 	moduleTypeSlice := make([]string, 5)
@@ -531,6 +531,7 @@ func readSave(fileName string) {
 	for i, c := range save.Constructions.Construction {
 
 		if c.Type != "Connection" {
+			modCount++
 			modType := c.ModuleType.Value
 			if _, value := moduleTypeMap[modType]; !value {
 				moduleTypeMap[modType] = true
@@ -596,6 +597,7 @@ func readSave(fileName string) {
 	sort.Strings(moduleTypeSlice)
 	log.Infof("Coordinates (%v, %v)", max, min)
 	log.Infof("IDs (%v, %v)", minID, maxID)
+	log.Infof("Total modules: %v", modCount)
 	//log.Info("\"", strings.Join(moduleTypeSlice, "\",\n\""), "\"")
 	//log.Info(moduleTypeSize)
 	log.Infof("Gender: %v Head: %v Skin: %v Hair: %v", maxGender, maxHead, maxSkin, maxHair)

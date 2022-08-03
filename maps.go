@@ -98,7 +98,7 @@ var moduleSizes = map[string]int64{
 	"Sr": 4,
 	"Te": 2,
 	"Wa": 2,
-	"Wt": 2,
+	"Wt": 1,
 	"Wi": 3,
 }
 
