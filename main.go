@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/Pallinder/go-randomdata"
 
@@ -194,7 +195,7 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64, d
 			}
 
 			if len(template) >= x*2 && len(template[x*2]) > z*2 {
-				if _, value := moduleTypes[template[x*2][z*2]]; value {
+				if _, value := moduleTypes[strings.ToLower(template[x*2][z*2])]; value {
 					log.Debugf("(%v,%v) %v", x, z, moduleTypes[template[x*2][z*2]])
 					totalModules++
 					c := initModule(template[x*2][z*2], p1)
@@ -240,6 +241,21 @@ func addStructures(s *SaveGame, template [][]string, xSize int64, zSize int64, d
 	return int64(totalModules)
 }
 
+//Calculates the size using binary representation in capitalization
+func sizeFromTemplate(s string) int64 {
+	size := int64(0)
+	len := len(s)
+
+	for i, c := range []byte(s) {
+		if unicode.IsUpper(rune(c)) {
+			size += 1 << (len - 1 - i)
+		}
+	}
+	log.Debugf("Interpreting %v as %v", s, size)
+
+	return size
+}
+
 // Calculates the position of a connection between two Modules
 func calcLinkPosition(p1 Position, p2 Position, s1 int64, s2 int64) Position {
 	dist := math.Sqrt(math.Pow(p2.X-p1.X, 2.0) + math.Pow(p2.Y-p1.Y, 2.0) + math.Pow(p2.Z-p1.Z, 2.0))
@@ -280,16 +296,22 @@ func initConnection(m1 Construction, m2 Construction) Construction {
 
 //Initializes a Module
 func initModule(t string, p Position) Construction {
+	size := sizeFromTemplate(t)
+	tl := strings.ToLower(t)
 	c := initConstruction("Module", p)
-	c.ModuleType.Value = moduleTypes[t]
-	c.SizeIndex.Value = moduleSizes[t]
+	c.ModuleType.Value = moduleTypes[tl].Name
+	c.SizeIndex.Value = moduleTypes[tl].Min + size
+	if c.SizeIndex.Value > moduleTypes[tl].Max {
+		c.SizeIndex.Value = moduleTypes[tl].Max
+	}
+	log.Debugf("%v is size %v", t, c.SizeIndex.Value)
 
-	if t == "Po" {
+	if tl == "po" {
 		c.PowerStorage = &XMLFloat64{
-			Value: 20000000,
+			Value: 5000000,
 		}
 	}
-	if moduleOx[t] {
+	if moduleTypes[tl].Ox {
 		c.Oxygen.Value = 1.0
 	}
 
@@ -651,6 +673,6 @@ Where Ox, Ai, and So are modules and ==, //, and \\ are connections between them
 	}
 	sort.Sort(sort.StringSlice(keys))
 	for _, v := range keys {
-		fmt.Printf("- %v: %v\n", v, moduleTypes[v][10:])
+		fmt.Printf("- %v: %v\n", v, moduleTypes[v].Name[10:])
 	}
 }
