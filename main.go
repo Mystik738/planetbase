@@ -675,7 +675,7 @@ func checkErr(err error) {
 }
 
 func helpText() {
-	fmt.Println(`This is a utility for creating Planetbase .sav files from a template. Modules in the template will be output at their largest size.
+	fmt.Println(`This is a utility for creating Planetbase .sav files from a template. 
 
 Flags:`)
 	flag.PrintDefaults()
@@ -686,7 +686,7 @@ Ox==Ai
  \\//
   So
 
-Where Ox, Ai, and So are modules and ==, //, and \\ are connections between them. Modules are expected to be connected hexagonally. The full list of module values are:`)
+Where Ox, Ai, and So are modules and ==, //, and \\ are connections between them. Modules are expected to be connected hexagonally. Module size is determined by the binary representation of the capitalization in the template, i.e. ox, oX, Ox, and OX are 00, 01, 10, 11 or zero through three, respectively, starting at the module's smallest size. Anything above the module's largest size will remain at its largest size. The full list of module values are:`)
 	keys := make([]string, 0)
 	for k := range moduleTypes {
 		keys = append(keys, k)
