@@ -320,24 +320,44 @@ func initModule(t string, p Position) Construction {
 
 //Orient a Module based on its connections
 func orientModule(template [][]string, x int, z int) Position {
-	if !compareTemplate(template, x, z-1, "  ") && !compareTemplate(template, x, z+1, "  ") {
-		return Position{}
-	}
-
 	//Offset
 	offset := 0
-	if z%4 == 2 {
+	if x%4 == 2 {
 		offset = 1
 	}
 
-	if compareTemplate(template, x-1, z-1+offset, "\\\\") && compareTemplate(template, x+1, z+offset, "\\\\") {
-		return Position{
-			Y: 60,
+	//This is barbaric but I'm not sure how to simplify
+	conns := []bool{
+		compareTemplate(template, x, z+1, "=="),
+		compareTemplate(template, x-1, z+offset, "//"),
+		compareTemplate(template, x-1, z-1+offset, "\\\\"),
+		compareTemplate(template, x, z-1, "=="),
+		compareTemplate(template, x+1, z-1+offset, "//"),
+		compareTemplate(template, x+1, z+offset, "\\\\"),
+	}
+
+	//If opposite connections, rotate
+	for i := 0; i < 3; i++ {
+		if conns[i] && conns[i+3] {
+			return Position{Y: -60.0 * float64(i)}
 		}
 	}
-	if compareTemplate(template, x+1, z-1+offset, "//") && compareTemplate(template, x-1, z+offset, "//") {
+
+	//If only one connection, face it
+	dir := -1
+	for i, b := range conns {
+		if b {
+			if dir == -1 {
+				dir = i
+			} else {
+				dir = -1
+				break
+			}
+		}
+	}
+	if dir != -1 {
 		return Position{
-			Y: 120,
+			Y: -60.0 * float64(dir),
 		}
 	}
 
